@@ -1,38 +1,37 @@
-%define targetfile /etc/event.d/rcS-sulogin
-
 Summary: Asks for roots password when booting up in single user mode
 Name: SL_password_for_singleuser
-Version: 2.0
-Release: 2
+Version: 3.0
+Release: 1
 License: GPL
 Group: SL
 Vendor: Scientific Linux
-Packager: Dan Yocum, Connie Sieh, Troy Dawson
+Packager: Dan Yocum, Connie Sieh, Troy Dawson, Stephan Wiesand
 Requires: initscripts
 Obsoletes: zz_inittab_change, SL_inittab_change
 BuildArchitectures: noarch
 
 %description
-This package will add an entry in /etc/event.d/rcS-sulogin to only 
-allow root access viapassword when a machine is booted into 
+This package will modify /etc/sysconfig/init to only 
+allow root access via password when a machine is booted into 
 single user mode.
 
-The original file will be saved as /etc/event.d/rcS-sulogin.rpmsave.
+The change is reverted when this package is removed.
 
 This package used to be called SL_inittab_change
 
 %files
 %triggerin -- initscripts
-if [ -f %{targetfile} ] ; then
-  if ! `grep -q /sbin/sulogin %{targetfile}` ; then
-    if ! [ -f %{targetfile}.rpmsave ] ; then
-      /bin/cp -f %{targetfile} %{targetfile}.rpmsave
-    fi
-      sed -i -e "s:.*exec /bin/bash:\#&\n\texec /sbin/sulogin:"  %{targetfile}
-  fi
-fi
+sed -i 's@^SINGLE=.*@SINGLE=/sbin/sulogin@' /etc/sysconfig/init >/dev/null 2>&1 || :
+
+%postun
+[ $1 -eq 0 ] || exit 0
+sed -i 's@^SINGLE=.*@SINGLE=/sbin/sushell@' /etc/sysconfig/init >/dev/null 2>&1 || :
+
 
 %changelog
+* Wed Jan 19 2011 Stephan Wiesand <stephan wiesand desy de> 3.0-1
+- made it work on SL6 (edit /etc/sysconfig/init)
+
 * Fri Aug 28 2009 Troy Dawson <dawson@fnal.gov> 2.0-2
 - Changed post script to be a triggers script on initscripts
 
